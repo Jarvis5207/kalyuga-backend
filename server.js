@@ -57,8 +57,8 @@ app.get("/health", (req, res) =>
 );
 
 app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
-  console.log("📥 Body:", req.body);       // text fields
-  console.log("📸 File:", req.file);       // photo info
+  console.log("📥 Body:", req.body);
+  console.log("📸 File:", req.file);
 
   try {
     const { name, age, problem } = req.body;
@@ -71,7 +71,7 @@ app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
         contentType: req.file.mimetype,
       };
 
-      // Disk se delete kar do (optional)
+      // Optional: delete temp file
       fs.unlinkSync(req.file.path);
     }
 
