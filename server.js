@@ -25,11 +25,10 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB error:", err.message));
 
-
 app.use(cors());
 app.use(express.json());
 
-// --- Multer setup (file upload) ---
+// --- Multer setup (temporary disk storage) ---
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = path.join(__dirname, "uploads");
@@ -52,9 +51,6 @@ const upload = multer({
   },
 });
 
-// Static folder for uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // --- Routes ---
 app.get("/health", (req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
@@ -64,15 +60,18 @@ app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
   try {
     const { name, age, problem } = req.body;
 
-    const photoInfo = req.file
-      ? {
-          filename: req.file.filename,
-          originalname: req.file.originalname,
-          url: "/uploads/" + req.file.filename,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-        }
-      : null;
+    let photoInfo = null;
+    if (req.file) {
+      // image ko binary buffer me padho
+      const imgData = fs.readFileSync(req.file.path);
+      photoInfo = {
+        data: imgData,
+        contentType: req.file.mimetype,
+      };
+
+      // ab disk se delete kar do (optional)
+      fs.unlinkSync(req.file.path);
+    }
 
     const complaint = await Complaint.create({
       name,
