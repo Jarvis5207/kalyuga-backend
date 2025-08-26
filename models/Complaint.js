@@ -5,8 +5,8 @@ const complaintSchema = new mongoose.Schema({
   age: { type: Number, required: true },
   problem: { type: String, required: true },
   photo: {
-    data: { type: Buffer },       // Binary data
-    contentType: { type: String } // MIME type
+    data: { type: Buffer },
+    contentType: { type: String }
   }
 }, { timestamps: true });
 
