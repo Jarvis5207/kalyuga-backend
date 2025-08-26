@@ -28,7 +28,7 @@ mongoose.connect(MONGODB_URI)
 app.use(cors());
 app.use(express.json());
 
-// --- Multer setup (temporary disk storage) ---
+// --- Multer setup ---
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = path.join(__dirname, "uploads");
@@ -57,19 +57,21 @@ app.get("/health", (req, res) =>
 );
 
 app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
+  console.log("📥 Body:", req.body);       // text fields
+  console.log("📸 File:", req.file);       // photo info
+
   try {
     const { name, age, problem } = req.body;
 
     let photoInfo = null;
     if (req.file) {
-      // image ko binary buffer me padho
       const imgData = fs.readFileSync(req.file.path);
       photoInfo = {
         data: imgData,
         contentType: req.file.mimetype,
       };
 
-      // ab disk se delete kar do (optional)
+      // Disk se delete kar do (optional)
       fs.unlinkSync(req.file.path);
     }
 
