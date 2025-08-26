@@ -5,6 +5,7 @@ import multer from "multer";
 import path from "path";
 import dotenv from "dotenv";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 import Complaint from "./models/Complaint.js";
 
@@ -12,7 +13,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
+// Fix __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- MongoDB connection ---
 const MONGODB_URI =
@@ -29,7 +32,7 @@ app.use(express.json());
 // --- Multer setup (file upload) ---
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(path.resolve(), "uploads"); // no "backend" subfolder needed for deployment
+    const uploadDir = path.join(__dirname, "uploads");
     fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
@@ -41,7 +44,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (allowed.includes(file.mimetype)) cb(null, true);
@@ -50,16 +53,13 @@ const upload = multer({
 });
 
 // Static folder for uploaded files
-app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // --- Routes ---
-
-// Health check
 app.get("/health", (req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
 );
 
-// Save complaint with photo
 app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
   try {
     const { name, age, problem } = req.body;
@@ -68,7 +68,7 @@ app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
       ? {
           filename: req.file.filename,
           originalname: req.file.originalname,
-          url: "/uploads/" + req.file.filename, // URL for frontend
+          url: "/uploads/" + req.file.filename,
           mimetype: req.file.mimetype,
           size: req.file.size,
         }
@@ -92,7 +92,6 @@ app.post("/submit-complaint", upload.single("photo"), async (req, res) => {
   }
 });
 
-// List all complaints (with photo URL)
 app.get("/complaints", async (req, res) => {
   try {
     const items = await Complaint.find().sort({ createdAt: -1 }).lean();
@@ -102,5 +101,4 @@ app.get("/complaints", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));      
-
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
