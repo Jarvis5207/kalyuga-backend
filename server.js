@@ -21,10 +21,10 @@ const __dirname = path.dirname(__filename);
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/complaints_db";
 
-mongoose
-  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB error:", err.message));
+
 
 app.use(cors());
 app.use(express.json());
